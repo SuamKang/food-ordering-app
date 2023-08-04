@@ -3,18 +3,12 @@ import React, { useContext, useEffect, useState } from "react";
 import classes from "./HeaderButton.module.css";
 import CartIcon from "../Cart/CartIcon";
 import CartContext from "../../store/cart-context";
+
 function HeaderButton(props) {
   const cartCtx = useContext(CartContext);
   const [isBtnHighlighted, setIsBtnHighlighted] = useState(false); // 버튼클래스 에니메이션 여부를 위한 상태
 
   const { items } = cartCtx;
-  // 장바구니에 담긴 items 항목들의 총 합(배열원소들의 어떠한 값을 구하는 고차함수 reduce사용)
-  const numberOfCartItems = items.reduce((acc, item) => {
-    return acc + item.amount;
-  }, 0);
-
-  // 장바구니의 수량 및 항목의 상태가 업데이트(추가,삭제)될때마다 header의 버튼에서 보여주는 수량부분에서 bump 에니메이션 효과를 주기위한 버튼클래스 변수를 설정해준다.
-  const btnClasses = `${classes.button} ${isBtnHighlighted && classes.bump}`;
 
   useEffect(() => {
     console.log("이펙트 실행");
@@ -32,6 +26,14 @@ function HeaderButton(props) {
       };
     }, 300);
   }, [items]);
+
+  // 장바구니에 담긴 items 항목들의 총 합(배열원소들의 어떠한 값을 구하는 고차함수 reduce사용)
+  const numberOfCartItems = items.reduce((acc, item) => {
+    return acc + item.amount;
+  }, 0);
+
+  // 장바구니의 수량 및 항목의 상태가 업데이트(추가,삭제)될때마다 header의 버튼에서 보여주는 수량부분에서 bump 에니메이션 효과를 주기위한 버튼클래스 변수를 설정해준다.
+  const btnClasses = `${classes.button} ${isBtnHighlighted && classes.bump}`;
 
   return (
     <button className={btnClasses} onClick={props.onCartOpen}>
