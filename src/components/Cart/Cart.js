@@ -1,12 +1,15 @@
-import React, { useContext } from "react";
+import React, { useState, useContext } from "react";
 
 import classes from "./Cart.module.css";
 
 import Modal from "../UI/Modal";
 import CartContext from "../../store/cart-context";
 import CartItem from "./CartItem";
+import Checkout from "./Checkout";
 
 function Cart(props) {
+  const [isCheckout, setIsCheckout] = useState(false);
+
   const cartCtx = useContext(CartContext);
 
   // 전체 수량값 가져오기(from 컨텍스트)
@@ -22,6 +25,10 @@ function Cart(props) {
   const cartItemAddHandler = (item) => {
     // 항목이 추가될때마다 그 항목의 수량은 1개씩 늘어나도록 고정되어야 하기에 item객체의 속성중 amount값은 1로 고정된값으로 새로운 객체를 만들어 addItem에 전달해줘야 추가 버튼을 클릭시 수량이 2배씩 커져나가는 버그를 방지할 수 있다.
     cartCtx.addItem({ ...item, amount: 1 });
+  };
+
+  const orderHandler = () => {
+    setIsCheckout(true);
   };
 
   const cartItems = (
@@ -40,6 +47,18 @@ function Cart(props) {
     </ul>
   );
 
+  const modalActions = (
+    <div className={classes.actions}>
+      <button className={classes["button--alt"]} onClick={props.onCartClose}>
+        Close
+      </button>
+      {hasItems && (
+        <button className={classes.button} onClick={orderHandler}>
+          Order
+        </button>
+      )}
+    </div>
+  );
   return (
     <Modal onCartClose={props.onCartClose}>
       {cartItems}
@@ -47,12 +66,8 @@ function Cart(props) {
         <span>Total Amount</span>
         <span>{totalAmount}</span>
       </div>
-      <div className={classes.actions}>
-        <button className={classes["button--alt"]} onClick={props.onCartClose}>
-          Close
-        </button>
-        {hasItems && <button className={classes.button}>Order</button>}
-      </div>
+      {isCheckout && <Checkout onCancel={props.onCartClose} />}
+      {!isCheckout && modalActions}
     </Modal>
   );
 }
