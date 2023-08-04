@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 
 import Card from "../UI/Card";
 import MealItem from "./MealItem/MealItem";
@@ -37,12 +37,12 @@ function AvailableMeals(props) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // http get
-  const fetchGetRequest = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  useEffect(() => {
+    // http get
+    const fetchGetRequest = async () => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
       const response = await fetch(
         "https://food-ordering-app-2401d-default-rtdb.firebaseio.com/meals.json"
       );
@@ -66,16 +66,32 @@ function AvailableMeals(props) {
       }
 
       setMeals(loadedMeals);
-    } catch (error) {
-      setError(error.meessage);
-    }
+      setIsLoading(false);
+    };
+    // fetchGetRequest는 비동기 함수 -> 항상 promise 리턴 -> 오류를 가져오게 된다면 반환되는 promise객체가 거부된다. 따라서 오류에 대해서 try/catch처럼 외부에서 래핑하여 다룰 수 없고, promise내부 반환되는 메소드(.catch())를 사용해서 오류를 잡아주는것이 좋을것 같다.
 
-    setIsLoading(false);
+    fetchGetRequest().catch((error) => {
+      setIsLoading(false);
+      setError(error.message);
+    });
   }, []);
 
-  useEffect(() => {
-    fetchGetRequest();
-  }, [fetchGetRequest]);
+  // elary return
+  if (isLoading) {
+    return (
+      <section className={classes["meals-loading"]}>
+        <p>Loading...</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className={classes["meals-error"]}>
+        <p>{error}</p>
+      </section>
+    );
+  }
 
   let content;
   if (meals.length > 0) {
@@ -88,12 +104,6 @@ function AvailableMeals(props) {
         price={meal.price}
       />
     ));
-  }
-  if (error) {
-    content = <p>{error}</p>;
-  }
-  if (isLoading) {
-    content = <p>loading...</p>;
   }
 
   return (
