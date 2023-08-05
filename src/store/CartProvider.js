@@ -51,7 +51,6 @@ const cartReducer = (state, action) => {
     const existingCartItemIdx = state.items.findIndex(
       (item) => item.id === action.payload
     );
-
     // 해당 항목
     const existingCartItem = state.items[existingCartItemIdx];
 
@@ -78,13 +77,14 @@ const cartReducer = (state, action) => {
       totalAmount: updatedTotalAmount,
     };
   }
+  if (action.type === "CLEAR") {
+    return defaultCartState;
+  }
   return defaultCartState;
 };
 
 // 장바구니 컨텍스트의 데이터를 관리하고 이를 제공해주려는 프로바이더 컴포넌트 함수생성
 const CartProvider = (props) => {
-  // 항목이 장바구니 안에 이미 있는지 없는지 등 상태로직이 다양하고 복잡하기때문에 useState대신 useReducer를 사용
-
   const [cartState, dispatchCart] = useReducer(cartReducer, defaultCartState);
 
   const addItemHandler = (item) => {
@@ -95,12 +95,17 @@ const CartProvider = (props) => {
     dispatchCart({ type: "REMOVE_CART", payload: id });
   };
 
+  const clearCartHandler = () => {
+    dispatchCart({ type: "CLEAR" });
+  };
+
   // 컨텍스트 데이터 관리-> useReducer로 관리되는 state를 적용해주기
   const cartContext = {
     items: cartState.items,
     totalAmount: cartState.totalAmount,
     addItem: addItemHandler,
     deleteItem: deleteItemHandler,
+    clearCart: clearCartHandler,
   };
 
   // provider에서는 항상 value속성값으로 전역상태를 전달해주자
