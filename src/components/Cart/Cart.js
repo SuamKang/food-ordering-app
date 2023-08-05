@@ -9,6 +9,9 @@ import Checkout from "./Checkout";
 
 function Cart(props) {
   const [isCheckout, setIsCheckout] = useState(false);
+  // 제출 진행상태와 제출된 상태 여부에 따라 사용자에게 메시지 피드백 줄 상태 설정
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [didSubmit, setDidSubmit] = useState(false);
 
   const cartCtx = useContext(CartContext);
 
@@ -17,20 +20,42 @@ function Cart(props) {
   // 장바구니 아이템 존재 여부 판단(from 컨택스트)
   const hasItems = cartCtx.items.length > 0;
 
-  // 삭제, 추가 함수 바인딩(from 컨텍스트)
   const cartItemRemoveHandler = (id) => {
     cartCtx.deleteItem(id);
   };
-
   const cartItemAddHandler = (item) => {
     // 항목이 추가될때마다 그 항목의 수량은 1개씩 늘어나도록 고정되어야 하기에 item객체의 속성중 amount값은 1로 고정된값으로 새로운 객체를 만들어 addItem에 전달해줘야 추가 버튼을 클릭시 수량이 2배씩 커져나가는 버그를 방지할 수 있다.
     cartCtx.addItem({ ...item, amount: 1 });
   };
-
+  // 주문서 오픈
   const orderHandler = () => {
     setIsCheckout(true);
   };
 
+  // 최종 서버로 양식 제출
+  const submitOrderHandler = async (userDataObj) => {
+    setIsSubmitting(true);
+
+    const response = await fetch(
+      "https://food-ordering-app-2401d-default-rtdb.firebaseio.com/orders.json",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "applycation/json",
+        },
+        body: JSON.stringify({
+          user: userDataObj, // 사용자 정보 및 주소 전달
+          orderedItems: cartCtx.items, // 사용자가 선택한 장바구니 항목들 전달
+        }),
+      }
+    );
+
+    setIsSubmitting(false);
+    setDidSubmit(true);
+    cartCtx.clearCart(); // 서버 제출 완료후 기존 장바구니 비우기
+  };
+
+  // 조건부 렌더링 변수화
   const cartItems = (
     <ul className={classes["cart-items"]}>
       {cartCtx.items.map((item) => (
@@ -59,15 +84,39 @@ function Cart(props) {
       )}
     </div>
   );
-  return (
-    <Modal onCartClose={props.onCartClose}>
+
+  const cartModalContent = (
+    <>
       {cartItems}
       <div className={classes.total}>
         <span>Total Amount</span>
         <span>{totalAmount}</span>
       </div>
-      {isCheckout && <Checkout onCancel={props.onCartClose} />}
+      {isCheckout && (
+        <Checkout onCancel={props.onCartClose} onSubmit={submitOrderHandler} />
+      )}
       {!isCheckout && modalActions}
+    </>
+  );
+
+  const isSubmittingModalContent = <p>Sending order data...</p>;
+
+  const didSubmitModalContent = (
+    <>
+      <p>Successfully sent the your order!</p>
+      <div className={classes.actions}>
+        <button className={classes.button} onClick={props.onCartClose}>
+          Close
+        </button>
+      </div>
+    </>
+  );
+
+  return (
+    <Modal onCartClose={props.onCartClose}>
+      {!isSubmitting && !didSubmit && cartModalContent}
+      {isSubmitting && isSubmittingModalContent}
+      {!isSubmitting && didSubmit && didSubmitModalContent}
     </Modal>
   );
 }
