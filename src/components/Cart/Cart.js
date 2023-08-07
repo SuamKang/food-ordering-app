@@ -6,14 +6,19 @@ import Modal from "../UI/Modal";
 import CartContext from "../../store/cart-context";
 import CartItem from "./CartItem";
 import Checkout from "./Checkout";
+import useFetch from "../../hooks/use-fetch";
 
 function Cart(props) {
   const [isCheckout, setIsCheckout] = useState(false);
-  // 제출 진행상태와 제출된 상태 여부에 따라 사용자에게 메시지 피드백 줄 상태 설정
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // const [isSubmitting, setIsSubmitting] = useState(false);
   const [didSubmit, setDidSubmit] = useState(false);
 
   const cartCtx = useContext(CartContext);
+  const {
+    isLoading: isSubmitting,
+    error,
+    sendRequest: postFetching,
+  } = useFetch();
 
   // 전체 수량값 가져오기(from 컨텍스트)
   const totalAmount = `${cartCtx.totalAmount.toFixed(2)}`;
@@ -34,23 +39,27 @@ function Cart(props) {
 
   // 최종 서버로 양식 제출
   const submitOrderHandler = async (userDataObj) => {
-    setIsSubmitting(true);
+    // 주문서 전역상태 업데이트 -> 추후 주문서 확인하기 페이지 구성후 적용해주자.(본인 주문 페이지에서 주문 취소하기 기능 만들기 위해)
+    // const updatedOrderCtx = (responseData) => {
+    //   const orderId = responseData.name;
+    //   console.log(orderId);
+    // };
 
-    const response = await fetch(
-      "https://food-ordering-app-2401d-default-rtdb.firebaseio.com/orders.json",
+    postFetching(
       {
+        url: "https://food-ordering-app-2401d-default-rtdb.firebaseio.com/orders.json",
         method: "POST",
         headers: {
           "Content-Type": "applycation/json",
         },
-        body: JSON.stringify({
+        body: {
           user: userDataObj, // 사용자 정보 및 주소 전달
           orderedItems: cartCtx.items, // 사용자가 선택한 장바구니 항목들 전달
-        }),
-      }
+        },
+      },
+      null
     );
 
-    setIsSubmitting(false);
     setDidSubmit(true);
     cartCtx.clearCart(); // 서버 제출 완료후 기존 장바구니 비우기
   };
