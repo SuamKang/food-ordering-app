@@ -11,7 +11,6 @@ function HeaderButton(props) {
   const { items } = cartCtx;
 
   useEffect(() => {
-    console.log("이펙트 실행");
     // 장바구니에 있는 항목이 하나 이상있는경우에만 에니메이션 효과를 주고싶기때문에 길이가 0일땐 바꾸지않고 그대로 반환해준다.
     if (items.length === 0) {
       return;
